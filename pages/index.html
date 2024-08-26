@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto p-4 flex justify-between items-center">
+            <div class="text-2xl font-bold">Eventify</div>
+            <div class="flex-grow mx-4">
+                <input id="search-bar" type="text" placeholder="Search events..." class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-md">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div id="events-container" class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold mb-8 text-center">Upcoming Events</h1>
+        <div id="events" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            <!-- Event cards will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const eventsContainer = document.getElementById('events');
+            const searchBar = document.getElementById('search-bar');
+            let events = [];
+
+            const fetchEvents = async () => {
+                try {
+                    const response = await fetch('http://localhost:5000/api/events');
+                    events = await response.json();
+                    displayEvents(events);
+                } catch (error) {
+                    console.error('Error fetching events:', error);
+                }
+            };
+
+            const displayEvents = (events) => {
+                eventsContainer.innerHTML = '';
+                events.forEach(event => {
+                    const eventCard = document.createElement('div');
+                    eventCard.classList.add('bg-white', 'p-6', 'rounded-lg', 'shadow-lg', 'card-hover', 'transition', 'transform', 'overflow-hidden');
+
+                    let imageUrl = event.image ? event.image.replace(/^3D"/, '').replace(/"$/, '') : null;
+
+                    eventCard.innerHTML = `
+                        <div class="w-full h-48 bg-gray-300 ${imageUrl ? '' : 'bg-gray-500'} rounded-md mb-4">
+                            ${imageUrl ? `<img src="${imageUrl}" alt="${event.title || 'No Title'}" class="w-full h-full object-cover rounded-md">` : ''}
+                        </div>
+                        <h2 class="text-xl font-semibold mb-2 truncate">${event.title || 'No Title'}</h2>
+                        <p class="text-gray-700 mb-4 overflow-ellipsis overflow-hidden">${event.description || 'No Description'}</p>
+                        <p class="text-gray-500">${event.timing || 'No Timing'}</p>
+                    `;
+
+                    eventsContainer.appendChild(eventCard);
+                });
+            };
+
+            searchBar.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredEvents = events.filter(event => 
+                    event.title.toLowerCase().includes(searchTerm) || 
+                    event.description.toLowerCase().includes(searchTerm)
+                );
+                displayEvents(filteredEvents);
+            });
+
+            await fetchEvents();
+        });
+    </script>
+</body>
+
+</html>
